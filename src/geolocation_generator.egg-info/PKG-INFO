@@ -1,0 +1,8 @@
+Metadata-Version: 2.1
+Name: geolocation-generator
+Version: 0.1
+Summary: Detect geolocation entities from the texts
+Author: rsh
+Author-email: 
+License: MIT
+Provides-Extra: transformers

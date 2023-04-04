@@ -1,0 +1,2 @@
+[console_scripts]
+download-pkgs = geolocation_generator:download_pkgs
