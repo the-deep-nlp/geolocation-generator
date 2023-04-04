@@ -3,7 +3,7 @@ Perform geo entities detection and disambiguation in respect of GeoNames databas
 
 # Install
 
-```pip install ```
+```pip install git+https://github.com/the-deep-nlp/geolocation-generator.git```
 
 It's possibile to install an extension compatible with the transformers library: `geolocation_generator[transformers]`
 Teh default version runs with SpaCy library models.
