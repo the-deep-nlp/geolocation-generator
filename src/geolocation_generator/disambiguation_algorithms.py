@@ -1,7 +1,11 @@
+import logging
 import numpy as np
 import pandasql as ps
 from .geo_distance import great_circle
 from sklearn.linear_model import LogisticRegression
+
+
+logging.getLogger().setLevel(logging.INFO)
 
 
 def RuleBasedDisambiguation(target, use_search_engine = False):
@@ -127,12 +131,12 @@ def TrainCustomDisambiguation(target, iters, use_search_engine):
     X_train = data.loc[data.test_set == 0, ["is_pop","adm_level"]]
     Y_train = data.loc[data.test_set == 0,"target"]
     model.fit(X_train, Y_train)
-    print("initial coeff:", model.intercept_, model.coef_)
+    logging.info("initial coeff:", model.intercept_, model.coef_)
 
     data['predict'] = model.predict_proba(X)[:,1]
 
     # compute pairwise distance between candidates
-    print("compute pairwise distance ---------")
+    logging.info("compute pairwise distance ---------")
     sqlcode = '''
     select a.lead_id, a.match name1, a.geonameid geonameid1, a.latitude latitude1, a.longitude longitude1,
         b.match name2, b.geonameid geonameid2, b.latitude latitude2, b.longitude longitude2 
@@ -233,7 +237,7 @@ def TrainCustomDisambiguation(target, iters, use_search_engine):
         Y_train = data.loc[data.test_set == 0,"target"]
 
         model.fit(X_train, Y_train)
-        print("coeff:", model.intercept_, model.coef_)
+        logging.info("coeff:", model.intercept_, model.coef_)
     return model.intercept_, model.coef_
 
 def sig(x):
@@ -267,7 +271,7 @@ def PredictCustomDisambiguation(target, coeffs, iters, use_search_engine = False
     data['predict'] = sig(np.dot(np.array(data[["is_pop","adm_level"]]), coeffs[1:3]) + coeffs[0])
 
     # compute pairwise distance between candidates
-    print("compute pairwise distance ---------")
+    logging.info("compute pairwise distance ---------")
     sqlcode = '''
     select a.lead_id, a.match name1, a.geonameid geonameid1, a.latitude latitude1, a.longitude longitude1,
         b.match name2, b.geonameid geonameid2, b.latitude latitude2, b.longitude longitude2 
@@ -367,7 +371,7 @@ def PredictCustomDisambiguation(target, coeffs, iters, use_search_engine = False
         X = np.array(data[["is_pop","adm_level", "wdistance", "sumw", "isclosest", "isbest"]]) 
 
         data['predict'] = sig(np.dot(X, coeffs[1:]) + coeffs[0])
-        print('iter', i+1)
+        logging.info('iter', i+1)
     return data
 
 def ThresholdDisambiguation(data, threshold):

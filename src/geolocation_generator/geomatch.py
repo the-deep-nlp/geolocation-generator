@@ -1,13 +1,19 @@
-import pandas as pd
 import re
-from collections import OrderedDict
 import ast
 import json
 import numpy as np
+import pandas as pd
 import unidecode
+import logging
+
+from collections import OrderedDict
 from whoosh.index import open_dir
 from whoosh.qparser import QueryParser
 from .geonameslocator import find_names
+
+
+logging.getLogger().setLevel(logging.INFO)
+
 
 def explode_locs(df, column = 'label'):
     '''
@@ -193,15 +199,15 @@ def loadGeonames(locationdata_path,locdictionary_path,reload):
     global locdictionary
     
     if reload:
-        print("load locationdata...")
+        logging.info("load locationdata...")
         locationdata = pd.read_csv(locationdata_path, sep='\t', low_memory=False, index_col="geonameid")
         locationdata.loc[locationdata['alternatenames'].isnull(),'alternatenames'] = '[]'
         locationdata["alternatenames"] = locationdata["alternatenames"].apply(lambda x: ast.literal_eval(x))
         
-        print("load locdictionary...")
+        logging.info("load locdictionary...")
         locdictionary = json.load(open(locdictionary_path))
     else:
-        print("load locationdata...")
+        logging.info("load locationdata...")
         try:
             locationdata
         except NameError:
@@ -209,7 +215,7 @@ def loadGeonames(locationdata_path,locdictionary_path,reload):
             locationdata.loc[locationdata['alternatenames'].isnull(),'alternatenames'] = '[]'
             locationdata["alternatenames"] = locationdata["alternatenames"].apply(lambda x: ast.literal_eval(x))
         
-        print("load locdictionary...")
+        logging.info("load locdictionary...")
         try:
             locdictionary
         except NameError:
@@ -246,7 +252,7 @@ def UniqueEntities_fromLS(data, locationdata_path = None, locdictionary_path = N
     unique_entities["post_entities"] = unique_entities["post_entities"].apply(lambda x: unidecode.unidecode(x))
     unique_entities["post_entities"] = unique_entities["post_entities"].apply(lambda x: re.sub("-|'", "", x))
     
-    print("apply geonames...")
+    logging.info("apply geonames...")
     unique_entities["match"] = unique_entities["post_entities"].apply(lambda x: find_names(x, locdictionary, locationdata))
 
     # exclude cardinality
@@ -260,7 +266,7 @@ def UniqueEntities_fromLS(data, locationdata_path = None, locdictionary_path = N
     unique_entities["geonameid"] = unique_entities["match"].apply(lambda x: locdictionary[x] if pd.notnull(x) else [])
     
     if use_search_engine:
-        print("add search engine results...")
+        logging.info("add search engine results...")
         indexdir = "geonames/indexdir" if indexdir == None else indexdir
         ix = open_dir(indexdir)
         # Create a searcher of that index

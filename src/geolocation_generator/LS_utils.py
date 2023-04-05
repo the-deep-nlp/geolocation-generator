@@ -1,7 +1,11 @@
 import json
+import logging
 import pandas as pd
 from os import path
 import pandasql as ps
+
+
+logging.getLogger().setLevel(logging.INFO)
 
 
 def build_LS_json(df, text, doc_id, model_version, max_str_len):
@@ -55,7 +59,7 @@ def write_LS_json(df, text, doc_id, model_version = "0", out_folder = "LS_predic
         file = build_LS_json(df, text, doc_id, model_version, max_str_len)
         with open(path.join(out_folder,str(doc_id)+'.json'), 'w') as f:
             json.dump(file, f, indent = 2)
-        print("Predictions created:", str(model_version), "to", str(doc_id)+".json")
+        logging.info(f"Predictions created: {str(model_version)} to {str(doc_id)+'.json'}")
     else:
         file_exists = path.isfile(path.join("LS_predictions",str(doc_id)+'.json'))
         if file_exists:
@@ -66,7 +70,7 @@ def write_LS_json(df, text, doc_id, model_version = "0", out_folder = "LS_predic
 
             with open(path.join(out_folder,str(doc_id)+'.json'), 'w') as f:
                 json.dump(file, f, indent = 2)
-            print("Predictions appended:", str(model_version), "to", str(doc_id)+".json")
+            logging.info(f"Predictions appended: {str(model_version)} to {str(doc_id)+'.json'}")
 
         else:
             append = False

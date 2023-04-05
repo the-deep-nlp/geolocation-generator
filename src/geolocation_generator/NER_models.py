@@ -3,8 +3,8 @@ import re
 import nltk
 from nltk.corpus import stopwords
 from .geonameslocator import match_with_gazetteer
-from transformers import AutoTokenizer, AutoModelForTokenClassification
-from transformers import pipeline
+#from transformers import AutoTokenizer, AutoModelForTokenClassification
+#from transformers import pipeline
 
 
 #load models for every language. Load once per session
@@ -35,6 +35,10 @@ def load_spacy_models():
         spacy_EN= spacy.load("en_core_web_md")
 
 def load_transformers_model(model_path):
+
+    from transformers import AutoTokenizer, AutoModelForTokenClassification
+    from transformers import pipeline
+
     global tokenizer
     try:
         tokenizer
@@ -178,6 +182,10 @@ def get_spacy_predictions(df, model = None):
 
 # apply Tranformers NER model to data
 def get_transformer_predictions(df, model_path, model = None, tokenizer = None, mode = None):
+
+    from transformers import AutoTokenizer, AutoModelForTokenClassification
+    from transformers import pipeline
+    
     df_ = df.copy()
     if mode == 'reload':
         if model_path:
