@@ -280,7 +280,8 @@ def UniqueEntities_fromLS(data, locationdata_path = None, locdictionary_path = N
         unique_entities['from_search'] = pd.Series((unique_entities.match_search.map(set) - unique_entities.geonameid.map(set)).map(list))
         unique_entities = unique_entities.drop(columns = {"geonameid", "match_search"}).rename(columns = {"geonameid_all":"geonameid"})
     else:
-        unique_entities['from_search'] = unique_entities.np.empty((len(df), 0)).tolist() #error here
+        unique_entities['from_search'] = [[]]*len(unique_entities)
+        #unique_entities['from_search'] = unique_entities.np.empty((len(df), 0)).tolist() #error here
         
     return unique_entities
 
