@@ -1,6 +1,6 @@
 import spacy
 import pandas as pd
-
+import nltk
 from .list_utils import apply_nList
 from .NER_models import get_ner, get_trans_ner
 from .LS_utils import merge_overlapping_ents
@@ -8,7 +8,7 @@ from .list_utils import concat, flatten_nList, addText_nListS, matchGeoids_nList
 from .geomatch import UniqueEntities_fromLS, BuildTarget
 from .disambiguation_algorithms import RuleBasedDisambiguation
 
-
+nltk.data.path.append('/nltk_data')
 
 class GeolocationGenerator:
 
