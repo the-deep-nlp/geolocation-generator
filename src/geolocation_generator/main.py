@@ -1,6 +1,6 @@
 import spacy
 import pandas as pd
-
+import nltk
 from .list_utils import apply_nList
 from .NER_models import get_ner, get_trans_ner
 from .LS_utils import merge_overlapping_ents
@@ -10,13 +10,7 @@ from .disambiguation_algorithms import RuleBasedDisambiguation
 from .api import clean_geo_tag, build_dict, format_output
 
 
-def shape_data(data, model_spacy):
-
-    locs = apply_nList(data, lambda x: get_ner(x, model_spacy, ["GPE", "LOC"]))
-    
-    merged = apply_nListS(locs, data, merge_overlapping_ents)
-
-    return merged, pd.DataFrame(flatten_nList(merged))
+nltk.data.path.append('/nltk_data')
 
 class GeolocationGenerator:
 
