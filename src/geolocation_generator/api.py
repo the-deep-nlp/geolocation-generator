@@ -48,7 +48,8 @@ def build_dict(x, username):
                     loc: res["geonames"]
                 })
         else:
-            logging.getLogger().setLevel(logging.INFO)
+            logging.error(f"Some error occurs requesting GeoNames API. Status Code: {req.status_code}")
+            #logging.getLogger().setLevel(logging.INFO)
     
     dict_final = reshape_final(dict_final)
     return dict_final

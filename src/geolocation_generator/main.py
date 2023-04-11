@@ -126,5 +126,3 @@ class GeolocationGenerator:
         geo_loc = build_dict(raw, username=geonames_username)
         final = format_output(geodictionary=geo_loc, raw_data=raw_data, entities=entities)
         return final
-
-
