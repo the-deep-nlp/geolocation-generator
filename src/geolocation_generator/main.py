@@ -7,8 +7,16 @@ from .LS_utils import merge_overlapping_ents
 from .list_utils import concat, flatten_nList, addText_nListS, matchGeoids_nListS, apply_nListS, cleanFinalOutput
 from .geomatch import UniqueEntities_fromLS, BuildTarget
 from .disambiguation_algorithms import RuleBasedDisambiguation
+from .api import clean_geo_tag, build_dict, format_output
 
 
+def shape_data(data, model_spacy):
+
+    locs = apply_nList(data, lambda x: get_ner(x, model_spacy, ["GPE", "LOC"]))
+    
+    merged = apply_nListS(locs, data, merge_overlapping_ents)
+
+    return merged, pd.DataFrame(flatten_nList(merged))
 
 class GeolocationGenerator:
 
@@ -16,6 +24,8 @@ class GeolocationGenerator:
         
         self.spacy_model_path = spacy_path
         self.trans_model_path = transformers_path
+        self.model_spacy = None
+        self.model_trans = None
         
         if spacy_path:
 
@@ -50,12 +60,12 @@ class GeolocationGenerator:
                      reload: bool = False):
         
         entities = UniqueEntities_fromLS(data,
-                                        locationdata_path=locationdata_path,
-                                        locdictionary_path=locdictionary_path,
-                                        use_search_engine=use_search_engine,
-                                        indexdir=indexdir,
-                                        filter_search_engine=filter_search_engine,
-                                        reload=reload)
+                                         locationdata_path=locationdata_path,
+                                         locdictionary_path=locdictionary_path,
+                                         use_search_engine=use_search_engine,
+                                         indexdir=indexdir,
+                                         filter_search_engine=filter_search_engine,
+                                         reload=reload)
         
         target = BuildTarget(entities,
                              gt_path=None,
@@ -88,23 +98,39 @@ class GeolocationGenerator:
     
     def get_geolocation(self, 
                        raw_data,
-                       locationdata_path:  str,
-                       locdictionary_path: str,
-                       indexdir: str,
+                       locationdata_path:  str = None,
+                       locdictionary_path: str = None,
+                       indexdir: str = None,
                        use_search_engine: bool = False,
                        filter_search_engine: str = '^AD|^PPL|^MT|^SEA|^LK$|^ISL$|^AIR',
-                       reload: bool = False
+                       reload: bool = False,
                        ):
-        
-        merged, locs_df = self.shape_data(data=raw_data)
+    
+            merged, locs_df = self.shape_data(data=raw_data)
 
-        loc_dict = GeolocationGenerator.get_entities(data=locs_df,
-                                                     locationdata_path=locationdata_path,
-                                                     locdictionary_path=locdictionary_path,
-                                                     use_search_engine=use_search_engine,
-                                                     indexdir=indexdir,
-                                                     filter_search_engine=filter_search_engine,
-                                                     reload=reload)
-        
-        final = cleanFinalOutput(addText_nListS(matchGeoids_nListS(merged, loc_dict), raw_data))
+            loc_dict = GeolocationGenerator.get_entities(data=locs_df,
+                                                        locationdata_path=locationdata_path,
+                                                        locdictionary_path=locdictionary_path,
+                                                        use_search_engine=use_search_engine,
+                                                        indexdir=indexdir,
+                                                        filter_search_engine=filter_search_engine,
+                                                        reload=reload)
+            
+            final = cleanFinalOutput(addText_nListS(matchGeoids_nListS(merged, loc_dict), raw_data))
+            return final
+    
+    def get_geolocation_api(self,
+                            raw_data: list,
+                            geonames_username: str):
+          
+        entities = [get_ner(el, self.model_spacy, ["GPE", "LOC"])  for el in raw_data]
+        if self.model_trans:
+            entities_trasformers = [get_trans_ner(el, self.model_trans, ["B-LOC", "I-LOC"]) for el in raw_data]
+            entities = [[a for a in x+y if a] for x, y in zip(entities, entities_trasformers)]
+
+        raw = [(x.get("ent"), clean_geo_tag(x)) for c in entities for x in c]
+        geo_loc = build_dict(raw, username=geonames_username)
+        final = format_output(geodictionary=geo_loc, raw_data=raw_data, entities=entities)
         return final
+
+

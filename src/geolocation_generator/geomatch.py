@@ -243,6 +243,7 @@ def match_search(df, column,locationdata, match_string, parser, searcher):
 def UniqueEntities_fromLS(data, locationdata_path = None, locdictionary_path = None, use_search_engine = True, 
                           indexdir = None, filter_search_engine = '', reload = False):
     
+    global locationdata, locdictionary
     #get unique entities
     unique_entities = GetUniqueEntities(data)
     
@@ -289,6 +290,7 @@ def BuildTarget(unique_entities, gt_path,
                 locationdata_path = None, 
                 locdictionary_path = None,
                 reload = False):
+   
     locationdata, locdictionary = loadGeonames(locationdata_path, locdictionary_path, reload)
     
     if gt_path != None:

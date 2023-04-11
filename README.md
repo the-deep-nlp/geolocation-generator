@@ -7,8 +7,21 @@ Perform geo entities detection and disambiguation in respect of GeoNames databas
 
 It's possibile to install an extension compatible with the transformers library: `geolocation_generator[transformers]`
 Default version runs with SpaCy library models.
+# Usage (API)
 
-# Usages
+For a faster version of the library, please use this method based on the Geonames search system (http://www.geonames.org/export/geonames-search.html). A little disambiguation ranking is builded on top of it (based on result countries distribution, geonames output order and entities types). In order to use it, please create a free account on http://www.geonames.org/login 
+```
+from geolocation_generator import GeolocationGenerator
+
+geolocation = GeolocationGenerator(spacy_path=MODEL_NAME_OR_PATH)
+
+results = geolocation.get_geolocation_api(
+                    raw_data = YOUR_DATA,
+                    geonames_username=YOUR_GEONAMES_USERNAME
+                )
+
+```
+# Usage
 
 ```
 from geolocation_generator import GeolocationGenerator
