@@ -17,7 +17,8 @@ setup(
         "unidecode",
         "scikit-learn",
         "nltk",
-        "spacy==3.4.0"
+        "spacy==3.4.0",
+        "typing-extensions==4.5.0"
     ],
 
     extras_require = {
