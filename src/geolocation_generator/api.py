@@ -56,12 +56,16 @@ def build_dict(x, username):
 
 
 def normalize(data, min_, max_):
+    if min_ == max_:
+        return data
     return (data - min_) / (max_ - min_)
 
 
 def reshape(counter):
     res = {}
     values = list(counter.values())
+    if not len(values):
+        return res
     min_, max_ = min(values), max(values)
     for k, v in counter.items():
         res.update({k: normalize(v, min_, max_)})
