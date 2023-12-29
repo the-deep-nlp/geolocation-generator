@@ -3,7 +3,7 @@ import re
 import requests
 import logging
 from collections import Counter
-
+from requests.exceptions import Timeout
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -28,7 +28,7 @@ def clean_geo_tag(x):
     x.update({"clean": [a for a in splits if a and a[0] not in [None, "-"]]})
     return splits
 
-def build_dict(x, username):
+def build_dict(x, username, timeout: int=10):
     
     dict_final = {}
     #
@@ -37,9 +37,14 @@ def build_dict(x, username):
     for loc, point in data:
         if point in dict_final.keys() or len(point)<=3:
             continue
-        req = requests.get(
-            GEONAMES_REQUESTS.format(point, username)
-        )
+        try:
+            req = requests.get(
+                GEONAMES_REQUESTS.format(point, username),
+                timeout=timeout
+            )
+        except Timeout:
+            logging.error("Timeout to Geolocation API has occurred.")
+            continue
         
         if req.status_code==200:
             res = req.json()
