@@ -4,6 +4,7 @@ import requests
 import logging
 from collections import Counter
 from requests.exceptions import Timeout
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -28,33 +29,45 @@ def clean_geo_tag(x):
     x.update({"clean": [a for a in splits if a and a[0] not in [None, "-"]]})
     return splits
 
-def build_dict(x, username, timeout: int=10):
-    
+def req_handler(data, timeout: int=10):
+    try:
+        response = requests.get(
+            GEONAMES_REQUESTS.format(data["point"], data["username"]),
+            timeout=timeout
+        )
+    except Timeout:
+        logging.error("Timeout to Geolocation API has occurred.")
+        response = None
+    return {
+        "response": response.json() if response and response.status_code==200 else None,
+        "loc": data["loc"],
+        "status_code": response.status_code if response else -1
+    }
+
+def build_dict(x, username):    
     dict_final = {}
-    #
+
     data = list(set([(loc, a[0].lower()) for loc, point in x for a in point if a]))
-    
+    futs = []
     for loc, point in data:
         if point in dict_final.keys() or len(point)<=3:
             continue
-        try:
-            req = requests.get(
-                GEONAMES_REQUESTS.format(point, username),
-                timeout=timeout
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            futs.append(executor.submit(
+                req_handler,
+                data={"point": point, "loc": loc, "username": username}
+                )
             )
-        except Timeout:
-            logging.error("Timeout to Geolocation API has occurred.")
-            continue
+        results = [fut.result() for fut in as_completed(futs)]
         
-        if req.status_code==200:
-            res = req.json()
-            if res.get("totalResultsCount")>0:
-                dict_final.update({
-                    loc: res["geonames"]
-                })
-        else:
-            logging.error(f"Some error occurs requesting GeoNames API. Status Code: {req.status_code}")
-            #logging.getLogger().setLevel(logging.INFO)
+        for result in results:
+            if result["response"]:
+                if result["response"]["totalResultsCount"] > 0:
+                    dict_final.update({
+                        result["loc"]: result["response"]["geonames"]
+                    })
+            else:
+                logging.error(f"Some error occurs requesting GeoNames API. Status Code: {result['status_code']}")
     
     dict_final = reshape_final(dict_final)
     return dict_final
