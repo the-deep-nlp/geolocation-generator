@@ -17,7 +17,9 @@ geolocation = GeolocationGenerator(spacy_path=MODEL_NAME_OR_PATH)
 
 results = geolocation.get_geolocation_api(
                     raw_data = YOUR_DATA,
-                    geonames_username=YOUR_GEONAMES_USERNAME
+                    geonames_username=YOUR_GEONAMES_USERNAME,
+                    geonames_token=YOUR_GEONAMES_TOKEN or None,
+                    premium_service=True or False
                 )
 
 ```
@@ -32,7 +34,7 @@ results = geolocation.get_geolocation(
                     raw_data = YOUR_DATA,
                     locationdata_path = GEONAMES_LOCATIONDATA,
                     locdictionary_path = GEONAMES_LOCATION_DICTIONARY,
-                    indexdir = CUSTOM_INDEX"
+                    indexdir = CUSTOM_INDEX
                     use_search_engine = True
                 )
 ```

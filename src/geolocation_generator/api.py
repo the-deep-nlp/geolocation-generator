@@ -2,6 +2,7 @@
 import re 
 import requests
 import logging
+from typing import Optional
 from collections import Counter
 from requests.exceptions import Timeout
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -11,6 +12,7 @@ logging.getLogger().setLevel(logging.INFO)
 
 cardinal_expression_pattern = re.compile(r"(?:northeast|northwest|southeast|southwest|north|south|east|west)(?:|ern)(?:\-|\s|)(?:north|west|east|south|)(?:ern|)", re.IGNORECASE)
 GEONAMES_REQUESTS = "http://api.geonames.org/searchJSON?q={}&maxRows=10&featureClass=A&featureClass=P&featureClass=L&featureClass=S&featureClass=S&username={}"
+GEONAMES_REQUESTS_PREMIUM = "http://ws.geonames.net/searchJSON?q={}&maxRows=10&featureClass=A&featureClass=P&featureClass=L&featureClass=S&featureClass=S&username={}&token={}"
 
 
 def clean_geo_tag(x):
@@ -29,14 +31,23 @@ def clean_geo_tag(x):
     x.update({"clean": [a for a in splits if a and a[0] not in [None, "-"]]})
     return splits
 
-def req_handler(data, timeout: int=10):
+def req_handler(data: dict, timeout: int=10):
     try:
-        response = requests.get(
-            GEONAMES_REQUESTS.format(data["point"], data["username"]),
-            timeout=timeout
-        )
+        if data["premium_service"] and data["token"]:
+            response = requests.get(
+                GEONAMES_REQUESTS_PREMIUM.format(data["point"], data["username"], data["token"]),
+                timeout=timeout
+            )
+        else:
+            response = requests.get(
+                GEONAMES_REQUESTS.format(data["point"], data["username"]),
+                timeout=timeout
+            )
     except Timeout:
         logging.error("Timeout to Geolocation API has occurred.")
+        response = None
+    except Exception as exc:
+        logging.error("Error has occurred while sending request. %s", str(exc))
         response = None
     return {
         "response": response.json() if response and response.status_code==200 else None,
@@ -44,9 +55,12 @@ def req_handler(data, timeout: int=10):
         "status_code": response.status_code if response else -1
     }
 
-def build_dict(x, username):    
+def build_dict(x: list, username: str, token: Optional[str], premium_service: bool):
     dict_final = {}
-
+    if premium_service and token:
+        logging.info("Requests will use Geonames premium service.")
+    else:
+        logging.info("Requests will use Geonames free service.")
     data = list(set([(loc, a[0].lower()) for loc, point in x for a in point if a]))
     futs = []
     for loc, point in data:
@@ -55,8 +69,13 @@ def build_dict(x, username):
         with ThreadPoolExecutor(max_workers=5) as executor:
             futs.append(executor.submit(
                 req_handler,
-                data={"point": point, "loc": loc, "username": username}
-                )
+                data={
+                    "point": point,
+                    "loc": loc,
+                    "username": username,
+                    "token": token,
+                    "premium_service": premium_service
+                })
             )
         results = [fut.result() for fut in as_completed(futs)]
         
