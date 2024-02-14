@@ -57,7 +57,10 @@ def req_handler(data: dict, timeout: int=10):
 
 def build_dict(x: list, username: str, token: Optional[str], premium_service: bool):
     dict_final = {}
-
+    if premium_service and token:
+        logging.info("Requests will use Geonames premium service.")
+    else:
+        logging.info("Requests will use Geonames free service.")
     data = list(set([(loc, a[0].lower()) for loc, point in x for a in point if a]))
     futs = []
     for loc, point in data:
