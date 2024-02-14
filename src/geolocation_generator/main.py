@@ -1,6 +1,7 @@
 import spacy
 import pandas as pd
 import nltk
+from typing import Optional
 from .list_utils import apply_nList
 from .NER_models import get_ner, get_trans_ner
 from .LS_utils import merge_overlapping_ents
@@ -45,13 +46,15 @@ class GeolocationGenerator:
         return merged, pd.DataFrame(flatten_nList(merged))
 
     @staticmethod
-    def get_entities(data: pd.DataFrame,
-                     locationdata_path:  str,
-                     locdictionary_path: str,
-                     indexdir: str,
-                     use_search_engine: bool = False,
-                     filter_search_engine: str = '^AD|^PPL|^MT|^SEA|^LK$|^ISL$|^AIR',
-                     reload: bool = False):
+    def get_entities(
+        data: pd.DataFrame,
+        locationdata_path:  str,
+        locdictionary_path: str,
+        indexdir: str,
+        use_search_engine: bool = False,
+        filter_search_engine: str = '^AD|^PPL|^MT|^SEA|^LK$|^ISL$|^AIR',
+        reload: bool = False
+    ):
         
         entities = UniqueEntities_fromLS(data,
                                          locationdata_path=locationdata_path,
@@ -90,15 +93,16 @@ class GeolocationGenerator:
 
         return loc_dict
     
-    def get_geolocation(self, 
-                       raw_data,
-                       locationdata_path:  str = None,
-                       locdictionary_path: str = None,
-                       indexdir: str = None,
-                       use_search_engine: bool = False,
-                       filter_search_engine: str = '^AD|^PPL|^MT|^SEA|^LK$|^ISL$|^AIR',
-                       reload: bool = False,
-                       ):
+    def get_geolocation(
+        self,
+        raw_data,
+        locationdata_path:  str = None,
+        locdictionary_path: str = None,
+        indexdir: str = None,
+        use_search_engine: bool = False,
+        filter_search_engine: str = '^AD|^PPL|^MT|^SEA|^LK$|^ISL$|^AIR',
+        reload: bool = False,
+    ):
     
             merged, locs_df = self.shape_data(data=raw_data)
 
@@ -113,9 +117,13 @@ class GeolocationGenerator:
             final = cleanFinalOutput(addText_nListS(matchGeoids_nListS(merged, loc_dict), raw_data))
             return final
     
-    def get_geolocation_api(self,
-                            raw_data: list,
-                            geonames_username: str):
+    def get_geolocation_api(
+        self,
+        raw_data: list,
+        geonames_username: str,
+        geonames_token: Optional[str]=None,
+        premium_service: bool=False
+    ):
           
         entities = [get_ner(el, self.model_spacy, ["GPE", "LOC"])  for el in raw_data]
         if self.model_trans:
@@ -123,6 +131,12 @@ class GeolocationGenerator:
             entities = [[a for a in x+y if a] for x, y in zip(entities, entities_trasformers)]
 
         raw = [(x.get("ent"), clean_geo_tag(x)) for c in entities for x in c]
-        geo_loc = build_dict(raw, username=geonames_username)
+
+        geo_loc = build_dict(
+            raw,
+            username=geonames_username,
+            token=geonames_token,
+            premium_service=premium_service
+        )
         final = format_output(geodictionary=geo_loc, raw_data=raw_data, entities=entities)
         return final
